@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>DativDrache 🐉</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    :root {
+      --bg: #0d0d1a;
+      --surface: #1a1a2e;
+      --surface2: #16213e;
+      --primary: #f5a623;
+      --secondary: #4ecdc4;
+      --accent: #ff6b6b;
+      --success: #51cf66;
+      --danger: #ff4757;
+      --purple: #c678dd;
+      --text: #ffffff;
+      --muted: #8888aa;
+      --r: 16px;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Nunito', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    /* BG STARS */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(circle at 20% 30%, rgba(78,205,196,0.04) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(245,166,35,0.04) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .screen { display: none; min-height: 100vh; padding: 20px; max-width: 480px; margin: 0 auto; flex-direction: column; position: relative; z-index: 1; }
+    .screen.active { display: flex; }
+
+    /* SPLASH */
+    #splash {
+      position: fixed; inset: 0; background: var(--bg);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 200; transition: opacity 0.6s ease;
+    }
+    #splash.hidden { opacity: 0; pointer-events: none; }
+    .splash-dragon { font-size: 90px; animation: floatBig 2s ease-in-out infinite; }
+    .splash-title { font-family: 'Fredoka One', sans-serif; font-size: 44px; color: var(--primary); margin-top: 10px; letter-spacing: 1px; }
+    .splash-sub { color: var(--muted); font-size: 15px; margin-top: 6px; }
+    .splash-bar { width: 160px; height: 4px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-top: 32px; overflow: hidden; }
+    .splash-bar-fill { height: 100%; background: var(--primary); border-radius: 4px; animation: loadBar 1.4s ease-out forwards; }
+    @keyframes loadBar { from { width: 0; } to { width: 100%; } }
+
+    /* HOME */
+    .home-top { text-align: center; padding: 32px 0 16px; }
+    .home-dragon { font-size: 64px; animation: floatBig 3s ease-in-out infinite; filter: drop-shadow(0 0 24px rgba(245,166,35,0.5)); }
+    @keyframes floatBig { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+    .app-title { font-family: 'Fredoka One', sans-serif; font-size: 38px; color: var(--primary); margin-top: 6px; }
+    .app-sub { color: var(--muted); font-size: 13px; margin-top: 3px; }
+
+    /* XP CARD */
+    .xp-card { background: var(--surface); border-radius: var(--r); padding: 16px; margin: 14px 0; border: 1px solid rgba(245,166,35,0.18); }
+    .xp-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .level-badge { background: var(--primary); color: #000; font-family: 'Fredoka One', sans-serif; padding: 3px 14px; border-radius: 20px; font-size: 14px; }
+    .streak-info { color: var(--accent); font-weight: 800; font-size: 14px; }
+    .xp-bar-bg { background: rgba(255,255,255,0.08); border-radius: 10px; height: 10px; overflow: hidden; }
+    .xp-bar-fill { height: 100%; background: linear-gradient(90deg, var(--primary), #ff9f43); border-radius: 10px; transition: width 0.6s cubic-bezier(.4,0,.2,1); }
+    .xp-label { font-size: 12px; color: var(--muted); text-align: right; margin-top: 4px; }
+
+    /* MODES */
+    .section-label { font-family: 'Fredoka One', sans-serif; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 3px; margin: 6px 0 10px; }
+    .mode-card { background: var(--surface); border-radius: var(--r); padding: 18px 20px; margin-bottom: 12px; display: flex; align-items: center; gap: 16px; cursor: pointer; border: 2px solid transparent; transition: transform 0.15s, border-color 0.2s; position: relative; overflow: hidden; }
+    .mode-card:active { transform: scale(0.97); }
+    .mode-card::after { content: '›'; position: absolute; right: 20px; font-size: 22px; color: rgba(255,255,255,0.2); }
+    .mode-card.fc  { border-color: rgba(78,205,196,0.25); background: linear-gradient(135deg, #1a1a2e, #0e2a2a); }
+    .mode-card.sb  { border-color: rgba(245,166,35,0.25); background: linear-gradient(135deg, #1a1a2e, #2a1f0e); }
+    .mode-card.sp  { border-color: rgba(255,107,107,0.25); background: linear-gradient(135deg, #1a1a2e, #2a0e0e); }
+    .mode-card.boss{ border-color: rgba(198,120,221,0.25); background: linear-gradient(135deg, #1a1a2e, #1e0e2a); }
+    .mode-icon { font-size: 42px; min-width: 52px; text-align: center; }
+    .mode-info h3 { font-family: 'Fredoka One', sans-serif; font-size: 20px; margin-bottom: 2px; }
+    .mode-info p { font-size: 12px; color: var(--muted); }
+    .mode-card.fc h3  { color: var(--secondary); }
+    .mode-card.sb h3  { color: var(--primary); }
+    .mode-card.sp h3  { color: var(--accent); }
+    .mode-card.boss h3{ color: var(--purple); }
+
+    /* BACK BTN */
+    .back-btn { background: none; border: none; color: var(--muted); font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; padding: 4px; }
+
+    /* MODE HEADER */
+    .mhdr { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; margin-bottom: 14px; }
+    .prog-txt { font-size: 14px; color: var(--muted); font-weight: 700; }
+    .str-badge { background: linear-gradient(135deg, var(--accent), #c0392b); color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; }
+
+    /* FLASHCARD */
+    .card-wrap { flex: 1; display: flex; align-items: center; margin-bottom: 8px; }
+    .flashcard {
+      width: 100%; height: 320px; border-radius: 22px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 32px 28px; text-align: center; cursor: pointer;
+      background: linear-gradient(145deg, #1a1a2e, #16213e);
+      border: 2px solid rgba(78,205,196,0.25);
+      transition: border-color 0.3s, background 0.3s, transform 0.15s;
+    }
+    .flashcard.flipped {
+      background: linear-gradient(145deg, #16213e, #0f3460);
+      border-color: rgba(245,166,35,0.25);
+    }
+    .flashcard.flip-anim { transform: scale(0.93); }
+    .card-front-content, .card-back-content { width: 100%; }
+    .card-back-content { display: none; }
+    .clvl { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; padding: 3px 12px; border-radius: 20px; margin-bottom: 14px; }
+    .clvl.A1 { background: rgba(81,207,102,0.15); color: #51cf66; }
+    .clvl.A2 { background: rgba(78,205,196,0.15); color: var(--secondary); }
+    .clvl.B1 { background: rgba(245,166,35,0.15); color: var(--primary); }
+    .clvl.B2 { background: rgba(255,107,107,0.15); color: var(--accent); }
+    .cv { font-family: 'Fredoka One', sans-serif; font-size: 48px; color: var(--secondary); margin-bottom: 6px; line-height: 1.1; }
+    .cv-hint { font-size: 13px; color: var(--muted); }
+    .tap-hint { font-size: 12px; color: var(--muted); margin-top: 20px; animation: blink 2s infinite; }
+    @keyframes blink { 0%,100%{opacity:.4} 50%{opacity:1} }
+    .cm { font-family: 'Fredoka One', sans-serif; font-size: 30px; color: var(--primary); margin-bottom: 10px; }
+    .ce { font-size: 15px; line-height: 1.7; color: var(--text); margin-bottom: 8px; }
+    .dh { color: var(--primary); font-weight: 800; background: rgba(245,166,35,0.12); padding: 1px 5px; border-radius: 4px; }
+    .cf { font-size: 12px; color: var(--muted); font-style: italic; margin-top: 6px; line-height: 1.5; }
+
+    /* ANSWER BTNS */
+    .ans-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+    .btn-no  { background: linear-gradient(135deg,#ff4757,#c0392b); border: none; color: #fff; padding: 16px; border-radius: var(--r); font-family: 'Nunito',sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; transition: transform .1s; }
+    .btn-yes { background: linear-gradient(135deg,#51cf66,#2ecc71); border: none; color: #fff; padding: 16px; border-radius: var(--r); font-family: 'Nunito',sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; transition: transform .1s; }
+    .btn-no:active, .btn-yes:active { transform: scale(0.96); }
+
+    /* SENTENCE BUILDER */
+    .s-card { background: var(--surface); border-radius: 20px; padding: 26px; margin-bottom: 16px; border: 2px solid rgba(245,166,35,0.18); }
+    .s-verb { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: var(--primary); font-weight: 700; margin-bottom: 10px; }
+    .s-sent { font-size: 20px; line-height: 1.8; font-weight: 600; }
+    .blank { display: inline-block; min-width: 70px; border-bottom: 3px solid var(--primary); text-align: center; color: var(--primary); font-weight: 800; padding: 0 4px; transition: color .3s; }
+    .opts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .opt { background: var(--surface2); border: 2px solid rgba(255,255,255,0.08); color: var(--text); padding: 16px; border-radius: var(--r); font-family: 'Nunito',sans-serif; font-size: 17px; font-weight: 700; cursor: pointer; transition: all .15s; }
+    .opt:active { transform: scale(0.96); }
+    .opt.correct { background: rgba(81,207,102,0.15); border-color: #51cf66; color: #51cf66; }
+    .opt.wrong   { background: rgba(255,71,87,0.15);  border-color: #ff4757; color: #ff4757; }
+    .fb-box { background: var(--surface); border-radius: var(--r); padding: 14px 16px; margin-top: 12px; font-size: 14px; line-height: 1.6; display: none; border-left: 4px solid var(--success); }
+    .fb-box.show     { display: block; }
+    .fb-box.fb-wrong { border-left-color: var(--danger); }
+    .next-btn { width: 100%; background: linear-gradient(135deg, var(--primary), #ff9f43); border: none; color: #000; padding: 18px; border-radius: var(--r); font-family: 'Fredoka One',sans-serif; font-size: 20px; cursor: pointer; margin-top: 14px; display: none; transition: transform .1s; }
+    .next-btn.show  { display: block; }
+    .next-btn:active{ transform: scale(0.98); }
+
+    /* SPEED */
+    .sp-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .sp-score-txt { font-family: 'Fredoka One',sans-serif; font-size: 22px; color: var(--primary); }
+    .sp-combo { font-size: 15px; font-weight: 800; color: var(--accent); padding: 3px 10px; background: rgba(255,107,107,0.12); border-radius: 20px; }
+    .timer-num { font-family: 'Fredoka One',sans-serif; font-size: 56px; text-align: center; line-height: 1; transition: color .3s; }
+    .timer-num.ok  { color: var(--secondary); }
+    .timer-num.warn{ color: var(--accent); animation: wobble 0.4s infinite; }
+    @keyframes wobble { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+    .timer-bar-bg { background: rgba(255,255,255,0.08); border-radius: 10px; height: 7px; overflow: hidden; margin: 8px 0 20px; }
+    .timer-bar-fill { height: 100%; background: linear-gradient(90deg, var(--secondary), var(--primary)); border-radius: 10px; transition: width 1s linear; }
+    .sp-q { background: var(--surface); border-radius: 20px; padding: 24px; text-align: center; margin-bottom: 16px; border: 2px solid rgba(255,255,255,0.07); }
+    .sp-qlabel { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-bottom: 8px; }
+    .sp-verb { font-family: 'Fredoka One',sans-serif; font-size: 44px; color: var(--secondary); }
+
+    /* RESULTS */
+    .res-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+    .res-emoji { font-size: 80px; animation: pop .5s cubic-bezier(.175,.885,.32,1.275); }
+    @keyframes pop { 0%{transform:scale(0)} 80%{transform:scale(1.15)} 100%{transform:scale(1)} }
+    .res-title { font-family: 'Fredoka One',sans-serif; font-size: 34px; color: var(--primary); margin: 10px 0 4px; }
+    .res-sub { color: var(--muted); font-size: 15px; margin-bottom: 24px; }
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; margin-bottom: 24px; }
+    .stat-box { background: var(--surface); border-radius: var(--r); padding: 16px; border: 1px solid rgba(255,255,255,0.07); }
+    .stat-n { font-family: 'Fredoka One',sans-serif; font-size: 30px; color: var(--primary); }
+    .stat-l { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+    .btn-home { width: 100%; background: linear-gradient(135deg, var(--primary), #ff9f43); border: none; color: #000; padding: 18px; border-radius: var(--r); font-family: 'Fredoka One',sans-serif; font-size: 21px; cursor: pointer; margin-bottom: 10px; }
+    .btn-home:active { transform: scale(0.98); }
+
+    /* TOAST */
+    .toast { position: fixed; top: 18px; left: 50%; transform: translateX(-50%) translateY(-80px); background: var(--surface); border: 2px solid var(--primary); color: var(--text); padding: 10px 22px; border-radius: 30px; font-weight: 700; font-size: 14px; z-index: 999; transition: transform .3s cubic-bezier(.175,.885,.32,1.275); white-space: nowrap; pointer-events: none; }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* XP POPUP */
+    .xp-pop { position: fixed; top: 45%; left: 50%; transform: translate(-50%,-50%) scale(0); background: var(--primary); color: #000; font-family: 'Fredoka One',sans-serif; font-size: 30px; padding: 12px 30px; border-radius: 40px; z-index: 998; pointer-events: none; transition: transform .25s cubic-bezier(.175,.885,.32,1.275); }
+    .xp-pop.show { transform: translate(-50%,-50%) scale(1); animation: xpUp 1s ease-out .2s forwards; }
+    @keyframes xpUp { to { transform: translate(-50%,-170%) scale(.7); opacity: 0; } }
+
+    /* BOSS banner */
+    .boss-banner { background: linear-gradient(135deg, rgba(198,120,221,0.15), rgba(198,120,221,0.05)); border: 2px solid rgba(198,120,221,0.3); border-radius: var(--r); padding: 10px 16px; text-align: center; margin-bottom: 14px; font-family: 'Fredoka One',sans-serif; font-size: 16px; color: var(--purple); display: none; }
+    .boss-banner.show { display: block; }
+  </style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="splash-dragon">🐉</div>
+  <div class="splash-title">DativDrache</div>
+  <div class="splash-sub">German Dative Verbs</div>
+  <div class="splash-bar"><div class="splash-bar-fill"></div></div>
+</div>
+
+<!-- TOAST & XP -->
+<div class="toast" id="toast"></div>
+<div class="xp-pop" id="xppop"></div>
+
+<!-- HOME -->
+<div id="screen-home" class="screen">
+  <div class="home-top">
+    <div class="home-dragon">🐉</div>
+    <div class="app-title">DativDrache</div>
+    <div class="app-sub">Master German Dative Verbs</div>
+  </div>
+  <div class="xp-card">
+    <div class="xp-top">
+      <span class="level-badge" id="lvl-badge">Level 1</span>
+      <span class="streak-info" id="str-info">🔥 0 Tage</span>
+    </div>
+    <div class="xp-bar-bg"><div class="xp-bar-fill" id="xpbar" style="width:0%"></div></div>
+    <div class="xp-label" id="xplabel">0 / 100 XP</div>
+  </div>
+  <div class="section-label">Spielmodus wählen</div>
+  <div class="mode-card fc" onclick="startMode('flashcard')">
+    <div class="mode-icon">🃏</div>
+    <div class="mode-info"><h3>Flashcards</h3><p>Flip cards • Build streaks • Learn deeply</p></div>
+  </div>
+  <div class="mode-card sb" onclick="startMode('sentence')">
+    <div class="mode-icon">✍️</div>
+    <div class="mode-info"><h3>Fill the Gap</h3><p>Pick the correct Dativ form in context</p></div>
+  </div>
+  <div class="mode-card sp" onclick="startMode('speed')">
+    <div class="mode-icon">⚡</div>
+    <div class="mode-info"><h3>Speed Round</h3><p>60 seconds • Combos • Rapid fire!</p></div>
+  </div>
+  <div class="mode-card boss" onclick="startMode('boss')">
+    <div class="mode-icon">💀</div>
+    <div class="mode-info"><h3>Boss Battle</h3><p>All modes mixed • Harder questions • Survive!</p></div>
+  </div>
+</div>
+
+<!-- FLASHCARD SCREEN -->
+<div id="screen-flashcard" class="screen">
+  <div class="mhdr">
+    <button class="back-btn" onclick="goHome()">← Zurück</button>
+    <span class="prog-txt" id="fc-prog">1 / 20</span>
+    <span class="str-badge" id="fc-str">🔥 0</span>
+  </div>
+  <div class="card-wrap">
+    <div class="flashcard" id="flashcard" onclick="flipCard()">
+      <div class="card-front-content" id="fc-front">
+        <span class="clvl" id="fc-lvl">A1</span>
+        <div class="cv" id="fc-verb">helfen</div>
+        <div class="cv-hint">Dativ-Verb</div>
+        <div class="tap-hint">👆 tap to reveal</div>
+      </div>
+      <div class="card-back-content" id="fc-back">
+        <span class="clvl" id="fc-lvl2">A1</span>
+        <div class="cm" id="fc-meaning">to help</div>
+        <div class="ce" id="fc-example"></div>
+        <div class="cf" id="fc-funny"></div>
+      </div>
+    </div>
+  </div>
+  <div class="ans-btns" id="fc-btns" style="display:none">
+    <button class="btn-no"  onclick="markCard(false)">✗ Noch üben</button>
+    <button class="btn-yes" onclick="markCard(true)">✓ Gewusst!</button>
+  </div>
+</div>
+
+<!-- SENTENCE BUILDER -->
+<div id="screen-sentence" class="screen">
+  <div class="mhdr">
+    <button class="back-btn" onclick="goHome()">← Zurück</button>
+    <span class="prog-txt" id="sb-prog">1 / 15</span>
+    <span class="str-badge" id="sb-str">🔥 0</span>
+  </div>
+  <div class="boss-banner" id="boss-banner">💀 BOSS MODE — Kein Fehler erlaubt!</div>
+  <div class="s-card">
+    <div class="s-verb" id="sb-vlabel">VERB: HELFEN</div>
+    <div class="s-sent" id="sb-sent"></div>
+  </div>
+  <div class="opts-grid" id="sb-opts"></div>
+  <div class="fb-box" id="sb-fb"></div>
+  <button class="next-btn" id="sb-next" onclick="nextSentence()">Weiter →</button>
+</div>
+
+<!-- SPEED SCREEN -->
+<div id="screen-speed" class="screen">
+  <div class="sp-hdr">
+    <button class="back-btn" onclick="goHome()">← Zurück</button>
+    <span class="sp-score-txt">Score: <span id="sp-score">0</span></span>
+    <span class="sp-combo" id="sp-combo">x1</span>
+  </div>
+  <div class="timer-num ok" id="sp-timer">60</div>
+  <div class="timer-bar-bg"><div class="timer-bar-fill" id="sp-tbar" style="width:100%"></div></div>
+  <div class="sp-q">
+    <div class="sp-qlabel">Was bedeutet das?</div>
+    <div class="sp-verb" id="sp-verb">helfen</div>
+  </div>
+  <div class="opts-grid" id="sp-opts"></div>
+</div>
+
+<!-- RESULTS -->
+<div id="screen-results" class="screen">
+  <div class="res-wrap">
+    <div class="res-emoji" id="res-emoji">🎉</div>
+    <div class="res-title" id="res-title">Ausgezeichnet!</div>
+    <div class="res-sub"   id="res-sub">Keep it up!</div>
+    <div class="stats-grid">
+      <div class="stat-box"><div class="stat-n" id="r-correct">0</div><div class="stat-l">Richtig</div></div>
+      <div class="stat-box"><div class="stat-n" id="r-acc">0%</div><div class="stat-l">Genauigkeit</div></div>
+      <div class="stat-box"><div class="stat-n" id="r-streak">0</div><div class="stat-l">Bester Streak</div></div>
+      <div class="stat-box"><div class="stat-n" id="r-xp">+0</div><div class="stat-l">XP verdient</div></div>
+    </div>
+    <button class="btn-home" onclick="goHome()">🏠 Zurück</button>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+//  DATA
+// ─────────────────────────────────────────────
+const VERBS = [
+  // A1
+  {v:"ab|sagen",      e:"to cancel",          lv:"A1", ex:"Ich muss **dir** für morgen absagen.",          fun:"💔 Er sagt **dem Date** ab — wegen Netflix."},
+  {v:"antworten",     e:"to reply",            lv:"A1", ex:"Er antwortet **dem Lehrer**.",                  fun:"🤖 Der Roboter antwortet **dem Chef** nur in Emojis."},
+  {v:"danken",        e:"to thank",            lv:"A1", ex:"Ich danke **dir**.",                             fun:"🌵 Ich danke **dem Kaktus** — er sticht nicht im Rücken."},
+  {v:"fehlen",        e:"to be missing",       lv:"A1", ex:"Sie fehlt **mir**!",                            fun:"😭 Der Kaffee fehlt **mir** montags am meisten."},
+  {v:"gefallen",      e:"to like / please",    lv:"A1", ex:"Gefällt **dir** mein Hemd?",                   fun:"🍕 Die Pizza gefällt **mir** mehr als der Montag."},
+  {v:"gehören",       e:"to belong to",        lv:"A1", ex:"Das Haus gehört **meiner Mutter**.",            fun:"🐉 Der Drache gehört **niemandem**. Er ist frei."},
+  {v:"glauben",       e:"to believe",          lv:"A1", ex:"Der Student glaubt **ihr** nicht.",             fun:"👻 Ich glaube **dem Geist** — er sagt immer die Wahrheit."},
+  {v:"gratulieren",   e:"to congratulate",     lv:"A1", ex:"Ich gratuliere **dir** zur bestandenen Prüfung.", fun:"🎂 Ich gratuliere **dem Kuchen** — er ist perfekt!"},
+  {v:"helfen",        e:"to help",             lv:"A1", ex:"Wir helfen **den alten Leuten**.",              fun:"🦸 Sogar Batman hilft **dem Joker** beim Zähneputzen."},
+  {v:"passieren",     e:"to happen",           lv:"A1", ex:"Was ist **dir** passiert?",                     fun:"🍦 Was ist **dem Eis** passiert? Ich hab es gegessen."},
+  {v:"raten",         e:"to advise",           lv:"A1", ex:"Ich rate **dir**, im Bett zu bleiben.",         fun:"😴 Ich rate **dir**: Schlaf schlägt Netflix."},
+  {v:"schmecken",     e:"to taste good",       lv:"A1", ex:"Das Essen schmeckt **mir** sehr gut.",          fun:"🥗 Der Salat schmeckt **mir**... eigentlich nicht."},
+  {v:"weh|tun",       e:"to hurt",             lv:"A1", ex:"Das Bein tut **ihm** weh.",                    fun:"🦷 Das Zähneputzen tut **dem Drachen** weh."},
+  {v:"zu|hören",      e:"to listen",           lv:"A1", ex:"Die Schüler hören **dem Professor** zu.",      fun:"🎧 Der Hund hört **dem Radio** zu — er mag Jazz."},
+  // A2
+  {v:"auf|fallen",    e:"to attract attention",lv:"A2", ex:"Ist **dir** der Fehler aufgefallen?",          fun:"🦩 Der Flamingo fällt **den Tauben** auf."},
+  {v:"erlauben",      e:"to allow",            lv:"A2", ex:"Sie erlaubt **dem Kind** ein Handy.",           fun:"📱 10 Minuten erlaubt — dann 3 Stunden passiert."},
+  {v:"erscheinen",    e:"to seem / appear",    lv:"A2", ex:"Das Kind erscheint **mir** sehr jung.",         fun:"👽 Der Alien erscheint **dem Bauern** um 3 Uhr nachts."},
+  {v:"folgen",        e:"to follow",           lv:"A2", ex:"Folgt einfach **der Strasse**!",               fun:"🦆 Enten folgen **der Mama-Ente** wie Soldaten."},
+  {v:"hinterher|laufen",e:"to run behind sb.", lv:"A2", ex:"Die Katze läuft **der Maus** hinterher.",     fun:"🐱 Die Katze läuft **der Maus** hinterher — seit 3000 Jahren."},
+  {v:"nach|laufen",   e:"to run after",        lv:"A2", ex:"Der Hund läuft **dem Auto** nach.",            fun:"🐕 Der Hund läuft **dem Ball** nach — für immer."},
+  {v:"passen",        e:"to fit",              lv:"A2", ex:"Passt **mir** die Bluse?",                     fun:"👖 Die Hose passt **mir** nicht — danke, Weihnachten."},
+  {v:"vertrauen",     e:"to trust",            lv:"A2", ex:"Ich vertraue **meinem Freund**.",              fun:"🗺️ Ich vertraue **dem GPS** — es bringt mich ins Meer."},
+  {v:"verzeihen",     e:"to forgive",          lv:"A2", ex:"Er kann **ihr** nicht verzeihen.",             fun:"😇 Ich verzeihe **dem Montag** — nur dieses Mal."},
+  {v:"widersprechen", e:"to disagree",         lv:"A2", ex:"Der Sohn widerspricht **seiner Mutter**.",     fun:"💬 Söhne widersprechen **dem Vater** — seit 3000 Jahren."},
+  {v:"zu|sagen",      e:"to accept / agree",   lv:"A2", ex:"Paul hat **uns** für die Hochzeit zugesagt.", fun:"🎉 Ich sage **der Party** zu — natürlich!"},
+  {v:"zu|stimmen",    e:"to agree / admit",    lv:"A2", ex:"Die Bürger stimmen **dem Gesetz** zu.",       fun:"✅ Ich stimme **dem Kuchen** zu: Ja, ich esse dich."},
+  // B1
+  {v:"ab|raten",      e:"to advise against",   lv:"B1", ex:"Er rät **ihr** von der Idee ab.",              fun:"🚩 Ich rate **dir** ab: Nie mit dem Chef über Gehalt reden."},
+  {v:"befehlen",      e:"to command",          lv:"B1", ex:"Der Polizist befiehlt **dem Verbrecher** zu warten.", fun:"👑 Der König befiehlt **dem Koch**: Mehr Käse!"},
+  {v:"begegnen",      e:"to encounter",        lv:"B1", ex:"Ich bin **ihm** nie begegnet.",                fun:"🚶 Ich begegnete **dem Bürgermeister** im Supermarkt."},
+  {v:"dienen",        e:"to serve",            lv:"B1", ex:"Das Gesetz dient **der Bevölkerung**.",        fun:"🛡️ Der Regenschirm dient **dem Kopf** bei Regen."},
+  {v:"drohen",        e:"to threaten",         lv:"B1", ex:"Die Mutter droht **ihrem Kind**.",             fun:"😤 Die Katze droht **dem Hund** — täglich, 7 Uhr."},
+  {v:"ein|fallen",    e:"to come to mind",     lv:"B1", ex:"Mir fällt nichts ein!",                        fun:"🧠 Mir fällt **nichts ein** — wie immer im Test."},
+  {v:"entgegen|gehen",e:"to head towards",     lv:"B1", ex:"Sie geht **ihrem Freund** entgegen.",         fun:"🚶 Er geht **dem Problem** entgegen — mutig oder dumm?"},
+  {v:"entgegen|fahren",e:"to drive towards",   lv:"B1", ex:"Der Mann fährt **ihr** auf dem Fahrrad entgegen.", fun:"🚲 Er fährt **dem Chef** entgegen — auf einem Einrad."},
+  {v:"entgegen|kommen",e:"to come towards",    lv:"B1", ex:"Ich komme **dir** entgegen.",                 fun:"🤝 Ich komme **dir** entgegen — aber nur bis zur Tür."},
+  {v:"entsprechen",   e:"to correspond",       lv:"B1", ex:"Das entspricht nicht **meiner Vorstellung**.",fun:"🎬 Der Film entspricht **meinen Erwartungen** gar nicht."},
+  {v:"erwidern",      e:"to respond / answer", lv:"B1", ex:"Du darfst **ihm** nicht erwidern.",           fun:"😶 Er erwidert **dem Chef** nichts — sehr weise."},
+  {v:"gelingen",      e:"to succeed",          lv:"B1", ex:"Es gelingt **mir** nicht!",                   fun:"🎯 Es gelingt **mir** — nach dem 47. Versuch."},
+  {v:"genügen",       e:"to suffice",          lv:"B1", ex:"Genügt **dir** das?",                         fun:"☕ Eine Tasse genügt **mir**. (Lüge.)"},
+  {v:"nützen",        e:"to benefit",          lv:"B1", ex:"Diese Übung nützt **mir** nichts.",           fun:"📚 Das Buch nützt **mir** nichts — ich lese es nie."},
+  {v:"schaden",       e:"to harm",             lv:"B1", ex:"Rauchen schadet **der Gesundheit**!",         fun:"🚬 Schaden tut es **dem Geldbeutel** auch."},
+  {v:"sich schaden",  e:"to harm oneself",     lv:"B1", ex:"Du schadest nur **dir selbst**!",             fun:"🪞 Er schadet nur **sich selbst** — täglich vor dem Spiegel."},
+  {v:"trauen",        e:"to trust",            lv:"B1", ex:"Vertrau **mir**!",                            fun:"🤨 Ich traue **dem stillen Kollegen** nicht."},
+  {v:"winken",        e:"to wave",             lv:"B1", ex:"Meine Schwester winkt **dir**.",              fun:"👋 Die Oma winkt **dem falschen Auto** auf der Autobahn."},
+  {v:"zu|sehen",      e:"to watch",            lv:"B1", ex:"Das Kind sieht **dem Opa** beim Arbeiten zu.",fun:"🎣 Ich sehe **dem Fisch** beim Schwimmen zu."},
+  {v:"zu|wenden",     e:"to turn attention to",lv:"B1", ex:"Er wendet sich **seiner Arbeit** zu.",        fun:"💻 Er wendet sich **dem Laptop** zu — wie immer."},
+  // B2
+  {v:"ähneln",        e:"to resemble",         lv:"B2", ex:"Sie ähnelt **deiner Schwester**.",            fun:"🪞 Der Hund ähnelt **dem Besitzer** — beide schlafen viel."},
+  {v:"aus|weichen",   e:"to avoid",            lv:"B2", ex:"Er ist **dem Auto** ausgewichen.",            fun:"🙈 Er weicht **dem Zahnarzt** seit 3 Jahren aus."},
+  {v:"bei|treten",    e:"to join",             lv:"B2", ex:"Seid ihr schon **meiner Gruppe** beigetreten?",fun:"🏊 Er tritt **dem Schwimmverein** bei — ohne schwimmen zu können."},
+  {v:"entfallen",     e:"to slip sb's memory", lv:"B2", ex:"Der Name ist **mir** gerade entfallen.",     fun:"🧠 Der Name fällt **mir** ein... nein, wieder weg."},
+  {v:"entfliehen",    e:"to escape",           lv:"B2", ex:"Der Täter ist **der Polizei** entflohen.",    fun:"🎮 Er entflieht **der Realität** durch Videospiele."},
+  {v:"entgegnen",     e:"to counter / reply",  lv:"B2", ex:"Ich entgegne **ihm** nie.",                  fun:"🤐 Er entgegnet **dem Chef** nichts — sehr klug."},
+  {v:"schmeicheln",   e:"to flatter",          lv:"B2", ex:"Du schmeichelst **mir**.",                   fun:"😏 Er schmeichelt **dem Chef** — immer wenn er Urlaub will."},
+  {v:"unterliegen",   e:"to be defeated",      lv:"B2", ex:"Sie ist **ihrer Gegnerin** unterlegen.",     fun:"♟️ Ich unterliege immer **dem Computer** beim Schach."},
+  {v:"vergeben",      e:"to forgive",          lv:"B2", ex:"Sie hat **ihm** nicht vergeben.",            fun:"🕊️ Ich vergebe **dem WLAN** — wenn es schneller wird."},
+  {v:"voraus|gehen",  e:"to precede",          lv:"B2", ex:"Dem Streit geht eine Geschichte voraus.",    fun:"📜 Dem Chaos geht **dem Plan** immer voraus."},
+  {v:"widerstehen",   e:"to resist",           lv:"B2", ex:"Er konnte **ihrem Lächeln** nicht widerstehen.", fun:"🍰 Niemand widersteht **dem Schokoladenkuchen**. Niemand."},
+  {v:"zuvor|kommen",  e:"to preempt",          lv:"B2", ex:"Ich bin **dir** zuvorgekommen.",             fun:"🏃 Er kommt **dem Alarm** zuvor — er schläft gar nicht."},
+];
+
+const SENTENCES = [
+  { t:"Ich helfe ___ alten Mann.",       a:"dem",     opts:["der","dem","den","die"],       x:"Mann ist maskulin → Dativ = dem Mann",       v:"helfen"   },
+  { t:"Ich danke ___ Lehrerin.",         a:"der",     opts:["dem","der","den","ein"],        x:"Lehrerin ist feminin → Dativ = der Lehrerin", v:"danken"   },
+  { t:"Das Kleid gefällt ___.",          a:"mir",     opts:["mich","mir","ich","meinen"],    x:"gefallen nimmt Dativ → 'mir' (nicht mich!)",  v:"gefallen" },
+  { t:"Das Auto gehört ___ Mutter.",     a:"meiner",  opts:["meine","meiner","meinem","mein"],x:"Mutter ist feminin → meiner (Dativ feminin)",v:"gehören"  },
+  { t:"Kannst du ___ helfen?",           a:"mir",     opts:["mich","mir","ich","mein"],      x:"helfen nimmt Dativ → ich → mir",              v:"helfen"   },
+  { t:"Die Hose passt ___ nicht.",       a:"mir",     opts:["mich","mir","ich","meinen"],    x:"passen nimmt Dativ → mir",                    v:"passen"   },
+  { t:"Er antwortet ___ Professor.",     a:"dem",     opts:["den","dem","der","einen"],      x:"Professor ist maskulin → Dativ = dem",        v:"antworten"},
+  { t:"Wir folgen ___ Straße.",          a:"der",     opts:["die","der","dem","den"],        x:"Straße ist feminin → Dativ = der Straße",     v:"folgen"   },
+  { t:"Sie vertraut ___ Freund.",        a:"ihrem",   opts:["ihren","ihrem","ihrer","ihre"], x:"Freund ist maskulin → ihrem (Dativ maskulin)",v:"vertrauen"},
+  { t:"Rauchen schadet ___ Gesundheit.", a:"der",     opts:["die","der","dem","das"],        x:"Gesundheit ist feminin → Dativ = der",        v:"schaden"  },
+  { t:"Er droht ___ Kind.",              a:"dem",     opts:["das","dem","der","den"],        x:"Kind ist neutral → Dativ = dem Kind",         v:"drohen"   },
+  { t:"Es gelingt ___ endlich!",         a:"mir",     opts:["mich","mir","ich","mein"],      x:"gelingen nimmt Dativ → mir",                  v:"gelingen" },
+  { t:"Die Katze folgt ___ Hund.",       a:"dem",     opts:["den","dem","der","des"],        x:"Hund ist maskulin → Dativ = dem Hund",        v:"folgen"   },
+  { t:"Kannst du ___ verzeihen?",        a:"mir",     opts:["mich","mir","ich","mein"],      x:"verzeihen nimmt Dativ → mir",                 v:"verzeihen"},
+  { t:"Das schmeckt ___ sehr gut.",      a:"mir",     opts:["mich","mir","ich","meinen"],    x:"schmecken nimmt Dativ → mir",                 v:"schmecken"},
+  { t:"Ich rate ___, mehr zu schlafen.", a:"dir",     opts:["dich","dir","du","dein"],       x:"raten nimmt Dativ → du → dir",               v:"raten"    },
+  { t:"Er begegnet ___ Freundin.",       a:"seiner",  opts:["seinen","seiner","seinem","seine"],x:"Freundin ist feminin → seiner (Dativ feminin)",v:"begegnen"},
+  { t:"Das nützt ___ nichts.",           a:"mir",     opts:["mich","mir","ich","meinen"],    x:"nützen nimmt Dativ → mir",                    v:"nützen"   },
+  { t:"Er ähnelt ___ Vater sehr.",       a:"seinem",  opts:["seinen","seinem","seiner","sein"],x:"Vater ist maskulin → seinem (Dativ maskulin)",v:"ähneln" },
+  { t:"Ich widerstehe ___ Kuchen nicht.",a:"dem",     opts:["den","dem","der","ein"],        x:"Kuchen ist maskulin → Dativ = dem Kuchen",    v:"widerstehen"},
+];
+
+// ─────────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────────
+let S = JSON.parse(localStorage.getItem('dd_state') || '{"xp":0,"level":1,"streak":0,"lastDay":null}');
+let sessionXP = 0, sesCorrect = 0, sesTotal = 0, sesBestStreak = 0;
+let curMode = '';
+
+// Flashcard
+let fcList=[], fcIdx=0, fcStreak=0, fcFlipped=false;
+// Sentence
+let sbList=[], sbIdx=0, sbStreak=0;
+// Speed
+let spTimer=60, spInterval=null, spScore=0, spCombo=1, spStreak=0, spList=[], spIdx=0;
+
+// ─────────────────────────────────────────────
+//  UTILS
+// ─────────────────────────────────────────────
+const shuffle = a => { const b=[...a]; for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]} return b; };
+const save = () => localStorage.setItem('dd_state', JSON.stringify(S));
+const screen = id => { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById('screen-'+id).classList.add('active'); };
+
+function toast(msg) {
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+function xpPop(n) {
+  const p=document.getElementById('xppop'); p.textContent='+'+n+' XP'; p.classList.remove('show');
+  void p.offsetWidth; p.classList.add('show');
+  setTimeout(()=>p.classList.remove('show'),1500);
+}
+
+function addXP(n) {
+  S.xp += n; sessionXP += n;
+  const need = 100 + (S.level-1)*50;
+  if(S.xp >= need){ S.xp -= need; S.level++; toast('🎉 Level Up! Du bist Level '+S.level+'!'); }
+  save(); updateHome();
+}
+
+function updateHome() {
+  document.getElementById('lvl-badge').textContent = 'Level '+S.level;
+  document.getElementById('str-info').textContent = '🔥 '+S.streak+' Tage';
+  const need = 100+(S.level-1)*50;
+  document.getElementById('xpbar').style.width = Math.min(100,(S.xp/need)*100)+'%';
+  document.getElementById('xplabel').textContent = S.xp+' / '+need+' XP';
+}
+
+function goHome() {
+  if(spInterval){ clearInterval(spInterval); spInterval=null; }
+  screen('home'); updateHome();
+}
+
+function fmtEx(s) {
+  return s.replace(/\*\*(.*?)\*\*/g,'<span class="dh">$1</span>');
+}
+
+// ─────────────────────────────────────────────
+//  FLASHCARD
+// ─────────────────────────────────────────────
+function loadFC() {
+  if(fcIdx >= fcList.length){ showResults(); return; }
+  const v = fcList[fcIdx];
+  fcFlipped = false;
+  const card = document.getElementById('flashcard');
+  card.classList.remove('flipped');
+  document.getElementById('fc-front').style.display = 'block';
+  document.getElementById('fc-back').style.display  = 'none';
+  document.getElementById('fc-btns').style.display  = 'none';
+  const lc='clvl '+v.lv;
+  document.getElementById('fc-lvl').className=lc; document.getElementById('fc-lvl').textContent=v.lv;
+  document.getElementById('fc-lvl2').className=lc; document.getElementById('fc-lvl2').textContent=v.lv;
+  document.getElementById('fc-verb').textContent=v.v;
+  document.getElementById('fc-meaning').textContent=v.e;
+  document.getElementById('fc-example').innerHTML=fmtEx(v.ex);
+  document.getElementById('fc-funny').textContent=v.fun||'';
+  document.getElementById('fc-prog').textContent=(fcIdx+1)+' / '+fcList.length;
+  document.getElementById('fc-str').textContent='🔥 '+fcStreak;
+}
+
+function flipCard() {
+  if(fcFlipped) return;
+  fcFlipped = true;
+  const card = document.getElementById('flashcard');
+  // Quick squeeze animation
+  card.classList.add('flip-anim');
+  setTimeout(() => {
+    document.getElementById('fc-front').style.display = 'none';
+    document.getElementById('fc-back').style.display = 'block';
+    card.classList.add('flipped');
+    card.classList.remove('flip-anim');
+    setTimeout(() => document.getElementById('fc-btns').style.display = 'grid', 80);
+  }, 150);
+}
+
+function markCard(ok) {
+  sesTotal++;
+  if(ok){ fcStreak++; sesCorrect++; sesBestStreak=Math.max(sesBestStreak,fcStreak); const x=10+Math.min(fcStreak*2,20); addXP(x); xpPop(x); if(fcStreak%5===0) toast('🔥 '+fcStreak+' Streak! Fantastisch!'); }
+  else  { fcStreak=0; }
+  document.getElementById('fc-str').textContent='🔥 '+fcStreak;
+  fcIdx++; setTimeout(loadFC,200);
+}
+
+// ─────────────────────────────────────────────
+//  SENTENCE BUILDER
+// ─────────────────────────────────────────────
+function loadSB() {
+  if(sbIdx >= sbList.length){ showResults(); return; }
+  const q=sbList[sbIdx];
+  document.getElementById('sb-vlabel').textContent='VERB: '+q.v.toUpperCase();
+  const parts=q.t.split('___');
+  document.getElementById('sb-sent').innerHTML=parts[0]+'<span class="blank" id="sb-blank">___</span>'+(parts[1]||'');
+  document.getElementById('sb-prog').textContent=(sbIdx+1)+' / '+sbList.length;
+  document.getElementById('sb-str').textContent='🔥 '+sbStreak;
+  const grid=document.getElementById('sb-opts'); grid.innerHTML='';
+  shuffle(q.opts).forEach(o=>{
+    const b=document.createElement('button'); b.className='opt'; b.textContent=o;
+    b.onclick=()=>checkSB(o,b,q); grid.appendChild(b);
+  });
+  document.getElementById('sb-fb').className='fb-box';
+  document.getElementById('sb-fb').innerHTML='';
+  document.getElementById('sb-next').className='next-btn';
+}
+
+function checkSB(chosen,btn,q) {
+  document.querySelectorAll('#sb-opts .opt').forEach(b=>b.onclick=null);
+  sesTotal++;
+  const ok=chosen===q.a;
+  const blank=document.getElementById('sb-blank');
+  blank.textContent=q.a;
+  blank.style.color=ok?'#51cf66':'#ff4757';
+  if(ok){
+    btn.classList.add('correct'); sesCorrect++; sbStreak++; sesBestStreak=Math.max(sesBestStreak,sbStreak);
+    const x=15+Math.min(sbStreak*3,30); addXP(x); xpPop(x);
+    if(sbStreak%5===0) toast('⚡ '+sbStreak+' Streak! Meisterhaft!');
+    document.getElementById('sb-fb').innerHTML='✅ <strong>Richtig!</strong> '+q.x;
+    document.getElementById('sb-fb').className='fb-box show';
+  } else {
+    btn.classList.add('wrong'); sbStreak=0;
+    document.querySelectorAll('#sb-opts .opt').forEach(b=>{ if(b.textContent===q.a) b.classList.add('correct'); });
+    document.getElementById('sb-fb').innerHTML='❌ <strong>Falsch.</strong> '+q.x;
+    document.getElementById('sb-fb').className='fb-box show fb-wrong';
+    if(curMode==='boss'){ setTimeout(()=>toast('💀 Boss Mode: Kein Fehler!'),200); }
+  }
+  document.getElementById('sb-next').className='next-btn show';
+}
+
+function nextSentence(){ sbIdx++; loadSB(); }
+
+// ─────────────────────────────────────────────
+//  SPEED ROUND
+// ─────────────────────────────────────────────
+function startSpeed() {
+  spScore=0; spCombo=1; spStreak=0; spTimer=60; spIdx=0;
+  spList = shuffle(VERBS).map(v=>{
+    const wrongs=shuffle(VERBS.filter(x=>x.e!==v.e)).slice(0,3).map(x=>x.e);
+    return {verb:v.v, correct:v.e, opts:shuffle([v.e,...wrongs])};
+  });
+  screen('speed');
+  document.getElementById('sp-score').textContent='0';
+  document.getElementById('sp-combo').textContent='x1';
+  document.getElementById('sp-timer').textContent='60';
+  document.getElementById('sp-timer').className='timer-num ok';
+  document.getElementById('sp-tbar').style.width='100%';
+  loadSpeedQ();
+  spInterval=setInterval(()=>{
+    spTimer--;
+    document.getElementById('sp-timer').textContent=spTimer;
+    document.getElementById('sp-tbar').style.width=(spTimer/60*100)+'%';
+    if(spTimer<=10) document.getElementById('sp-timer').className='timer-num warn';
+    if(spTimer<=0){ clearInterval(spInterval); spInterval=null; showResults(); }
+  },1000);
+}
+
+function loadSpeedQ() {
+  if(spIdx>=spList.length){ spIdx=0; spList=shuffle(spList); }
+  const q=spList[spIdx];
+  document.getElementById('sp-verb').textContent=q.verb;
+  const grid=document.getElementById('sp-opts'); grid.innerHTML='';
+  q.opts.forEach(o=>{
+    const b=document.createElement('button'); b.className='opt'; b.textContent=o;
+    b.onclick=()=>checkSpeed(o,b,q); grid.appendChild(b);
+  });
+}
+
+function checkSpeed(chosen,btn,q) {
+  document.querySelectorAll('#sp-opts .opt').forEach(b=>b.onclick=null);
+  sesTotal++;
+  if(chosen===q.correct){
+    btn.classList.add('correct'); spStreak++; sesCorrect++; sesBestStreak=Math.max(sesBestStreak,spStreak);
+    spCombo=Math.min(5,1+Math.floor(spStreak/3));
+    const pts=10*spCombo; spScore+=pts;
+    document.getElementById('sp-score').textContent=spScore;
+    document.getElementById('sp-combo').textContent='x'+spCombo;
+    addXP(pts); xpPop(pts);
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('#sp-opts .opt').forEach(b=>{ if(b.textContent===q.correct) b.classList.add('correct'); });
+    spStreak=0; spCombo=1;
+    document.getElementById('sp-combo').textContent='x1';
+  }
+  spIdx++; setTimeout(loadSpeedQ,500);
+}
+
+// ─────────────────────────────────────────────
+//  RESULTS
+// ─────────────────────────────────────────────
+function showResults() {
+  const acc = sesTotal>0 ? Math.round((sesCorrect/sesTotal)*100) : 0;
+  let emoji='🎯',title='Gut gemacht!',sub='Weiter so!';
+  if(acc>=90){ emoji='🏆'; title='Ausgezeichnet!';     sub='Du bist ein Dativ-Drache! 🐉'; }
+  else if(acc>=70){ emoji='🎉'; title='Sehr gut!';     sub='Fast perfekt!'; }
+  else if(acc>=50){ emoji='💪'; title='Nicht schlecht!';sub='Du wächst!'; }
+  else            { emoji='📚'; title='Übung macht den Meister!'; sub='Versuch es nochmal!'; }
+
+  document.getElementById('res-emoji').textContent=emoji;
+  document.getElementById('res-title').textContent=title;
+  document.getElementById('res-sub').textContent=sub;
+  document.getElementById('r-correct').textContent=curMode==='speed'?spScore:sesCorrect+'/'+sesTotal;
+  document.getElementById('r-acc').textContent=acc+'%';
+  document.getElementById('r-streak').textContent=sesBestStreak;
+  document.getElementById('r-xp').textContent='+'+sessionXP;
+
+  // daily streak
+  const today=new Date().toDateString();
+  if(S.lastDay!==today){
+    const yesterday=new Date(Date.now()-86400000).toDateString();
+    S.streak = S.lastDay===yesterday ? S.streak+1 : 1;
+    S.lastDay=today; save();
+    if(S.streak>1) setTimeout(()=>toast('🔥 '+S.streak+' Tage am Stück! Weiter so!'),600);
+  }
+  screen('results');
+}
+
+// ─────────────────────────────────────────────
+//  MODE ENTRY
+// ─────────────────────────────────────────────
+function startMode(mode) {
+  curMode=mode; sessionXP=0; sesCorrect=0; sesTotal=0; sesBestStreak=0;
+  if(mode==='flashcard'){
+    fcList=shuffle(VERBS); fcIdx=0; fcStreak=0;
+    document.getElementById('boss-banner').className='boss-banner';
+    loadFC(); screen('flashcard');
+  } else if(mode==='sentence'){
+    sbList=shuffle(SENTENCES).slice(0,15); sbIdx=0; sbStreak=0;
+    document.getElementById('boss-banner').className='boss-banner';
+    loadSB(); screen('sentence');
+  } else if(mode==='boss'){
+    sbList=shuffle(SENTENCES); sbIdx=0; sbStreak=0;
+    document.getElementById('boss-banner').className='boss-banner show';
+    loadSB(); screen('sentence');
+  } else if(mode==='speed'){
+    startSpeed();
+  }
+}
+
+// ─────────────────────────────────────────────
+//  INIT
+// ─────────────────────────────────────────────
+screen('home');
+updateHome();
+setTimeout(()=>{
+  const sp=document.getElementById('splash');
+  sp.classList.add('hidden');
+  setTimeout(()=>sp.remove(),600);
+},1600);
+</script>
+</body>
+</html>
